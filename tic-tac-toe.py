@@ -56,7 +56,7 @@ def reward(board: List[int], rewards: List[int]):
     elif(has_won(board, 2)):
         return rewards[1]
     #reward for tie
-    elif(len([i for i in board if i == 0 ]) == 0):
+    elif(len(get_valid_actions(board)) == 0):
         return rewards[2]
     #ongoing reward
     else:
@@ -108,6 +108,8 @@ def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,termin
 
 #training
 
+test_agent = False
+
 #hyperparams
 #number of episodes
 nbr_ep = 10000
@@ -122,7 +124,6 @@ epsilon = 0
 #penalty
 gamma = 0.5
 
-board = [0,0,0,0,0,0,0,0,0]
 
 #Switch starting order after each episode
 starting_order = False
@@ -131,8 +132,10 @@ starting_order = False
 
 
 # training loop
+
 for i in range(nbr_ep):
     n = 0
+    board = [0,0,0,0,0,0,0,0,0]
     while True:
         #change starting order between episodes
         if(n == 0 and starting_order):
@@ -155,8 +158,8 @@ for i in range(nbr_ep):
             #current state -> m1 move with certain action -> m2 move -> next state
             board[action] = 1
             
-            #have to check if board is full before other player moves
-            if(len(get_valid_actions(board)) >= 1):
+            #have to check if board is full or already won before old model moves
+            if(len(get_valid_actions(board)) >= 1 and not has_won(board, 1)):
                 board[random_model(board)] = 2
             
             #next state is derived
@@ -165,9 +168,9 @@ for i in range(nbr_ep):
             n += 1
         else:
             #episode complete
-            q_learning_updates(Q,state, action, immediate_reward, 0, alpha, gamma, True, board)
+            q_learning_updates(Q,state, action, immediate_reward, None, alpha, gamma, True, board)
             print_board(board)
             print("\n")
-            board = [0,0,0,0,0,0,0,0,0]
             starting_order = not starting_order
             break
+
