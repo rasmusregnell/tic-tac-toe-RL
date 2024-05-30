@@ -22,6 +22,7 @@ def random_model(board: List[int] ):
         random_integer = random.randint(0, len(board) - 1)
         if(board[random_integer] == 0):
             found = True
+        
     return random_integer
 
 #check if player(either 1 or 2) has won
@@ -86,8 +87,9 @@ def masked_next_action(Q,state,valid_actions):
 #select greedy action
 def get_greedy_action(Q,board,epsilon):
     state = state_to_int(board)
-    print(board)
     valid_actions = get_valid_actions(board)
+    if (len(valid_actions) == 1):
+        return valid_actions[0]
     if random.random() < epsilon:
         return random.choice(valid_actions)
     else:            
@@ -95,9 +97,9 @@ def get_greedy_action(Q,board,epsilon):
     
 def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,terminate,next_board):
     if(not terminate):
-        #valid_actions_next = get_valid_actions(next_board)
-        #best_next_action = masked_next_action(Q,next_state,valid_actions_next)
-        best_next_action = np.argmax(Q[next_state])
+        valid_actions_next = get_valid_actions(next_board)
+        best_next_action = masked_next_action(Q,next_state,valid_actions_next)
+        #best_next_action = np.argmax(Q[next_state])
         td_target = reward + gamma * Q[next_state][best_next_action]
     else:
         td_target = reward
@@ -116,7 +118,7 @@ rewards = [10,-10,5,0]
 #learning rate
 alpha = 0.5
 #explore random
-epsilon = 0.3
+epsilon = 0
 #penalty
 gamma = 0.5
 
@@ -143,8 +145,8 @@ for i in range(nbr_ep):
         immediate_reward = reward(board, rewards)
 
         #action selected, use get_greedy_action
-        #action = get_greedy_action(Q,board,epsilon)
-        action = np.argmax(Q[state])
+        action = get_greedy_action(Q,board,epsilon)
+        #action = np.argmax(Q[state])
 
         #if not terminate state
         if (immediate_reward == rewards[3]):
@@ -152,14 +154,20 @@ for i in range(nbr_ep):
             #next state is when both parts has played
             #current state -> m1 move with certain action -> m2 move -> next state
             board[action] = 1
-            board[random_model(board)] = 2
+            
+            #have to check if board is full before other player moves
+            if(len(get_valid_actions(board)) >= 1):
+                board[random_model(board)] = 2
+            
+            #next state is derived
             next_state = state_to_int(board)
             q_learning_updates(Q,state, action, immediate_reward, next_state, alpha, gamma, False,board)
             n += 1
         else:
             #episode complete
             q_learning_updates(Q,state, action, immediate_reward, 0, alpha, gamma, True, board)
+            print_board(board)
+            print("\n")
             board = [0,0,0,0,0,0,0,0,0]
             starting_order = not starting_order
-            print(n)
             break
