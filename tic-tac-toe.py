@@ -176,7 +176,7 @@ for i in range(nbr_ep):
 #Test
 
 #some parameters
-nbr_of_tests = 10000
+nbr_of_tests = 5
 result = [0,0,0]
 test_starting_order = False
 
@@ -200,8 +200,8 @@ def check_termination(r):
 
 for i in range(nbr_of_tests):
     print("Test", i+1)
-    print_board(board)
-    print("\n")
+    # print_board(board)
+    # print("\n")
     test_starting_order = not test_starting_order
     board = [0,0,0,0,0,0,0,0,0]
     n = 0
@@ -211,26 +211,27 @@ for i in range(nbr_of_tests):
         if(check[0]):
             result[check[1]] += 1
             break
-
-        if(n == 0 and test_starting_order):
+        
+        if(test_starting_order):
             action = get_greedy_action(Q, board, epsilon)
             board[action] = 1
         else:
             board[random_model(board)] = 2
 
-        
+        print_board(board)
         # Check for termination and rewards
         check = check_termination(reward(board, rewards))
         if(check[0]):
             result[check[1]] += 1
             break
         
-        if(n == 0 and test_starting_order):
+        if(test_starting_order):
             board[random_model(board)] = 2
         else:
             action = get_greedy_action(Q, board, epsilon)
             board[action] = 1
 
+        print_board(board)
         n += 1
 
 print("Number of Tests:", nbr_of_tests)
