@@ -106,9 +106,9 @@ def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,termin
     td_error = td_target - Q[state][action]
     Q[state][action] += alpha * td_error
 
-#training
+ #testing help methods
 
-test_agent = False
+#training
 
 #hyperparams
 #number of episodes
@@ -169,8 +169,66 @@ for i in range(nbr_ep):
         else:
             #episode complete
             q_learning_updates(Q,state, action, immediate_reward, None, alpha, gamma, True, board)
-            print_board(board)
-            print("\n")
             starting_order = not starting_order
             break
 
+
+#Test
+
+#some parameters
+nbr_of_tests = 100
+result = [0,0,0]
+
+#based on recieved reward, returns terminate(true or false) and result
+def check_termination(r):
+    terminate = False
+    result = 0
+    if r == rewards[0]:  # New model wins
+        print("New model wins")
+        terminate = True
+        result = 0
+    elif r == rewards[1]:  # Old model wins
+        print("Old model wins")
+        terminate = True
+        result = 1
+    elif r == rewards[2]:  # Tie
+        print("Tie")
+        terminate = True
+        result = 2
+    return [terminate,result]
+
+for i in range(nbr_of_tests):
+    print("Test", i+1)
+    print_board(board)
+    print("\n")
+    
+    board = [0,0,0,0,0,0,0,0,0]
+    
+    while True:
+        check = check_termination(reward(board, rewards))
+        if(check[0]):
+            result[check[1]] += 1
+            break
+
+        # Select action based on Q-values and epsilon-greedy policy
+        action = get_greedy_action(Q, board, epsilon)
+        
+        # Ensure selected action is valid
+        if action not in get_valid_actions(board):
+            print("Invalid action selected:", action)
+            break
+        
+        board[action] = 1  # Perform the action
+        
+        # Check for termination and rewards
+        check = check_termination(reward(board, rewards))
+        if(check[0]):
+            result[check[1]] += 1
+            break
+        
+        board[random_model(board)] = 2
+
+print("Number of Tests:", nbr_of_tests)
+print("New Model Wins:", result[0])
+print("Old Model Wins:", result[1])
+print("Ties:", result[2])
