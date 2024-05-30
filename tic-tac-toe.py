@@ -90,7 +90,7 @@ def get_greedy_action(Q,board,epsilon):
     valid_actions = get_valid_actions(board)
     if (len(valid_actions) == 1):
         return valid_actions[0]
-    if random.random() < epsilon:
+    if random.random() < epsilon and len(valid_actions) > 0:
         return random.choice(valid_actions)
     else:            
         return masked_next_action(Q,state,valid_actions)
@@ -120,7 +120,7 @@ rewards = [10,-10,5,0]
 #learning rate
 alpha = 0.5
 #explore random
-epsilon = 0
+epsilon = 0.3
 #penalty
 gamma = 0.5
 
