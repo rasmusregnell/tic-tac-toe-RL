@@ -112,7 +112,7 @@ def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,termin
 
 #hyperparams
 #number of episodes
-nbr_ep = 10000
+nbr_ep = 20000
 #initilize empty Q
 Q = np.zeros((3**9, 9))
 #initilize rewards
@@ -133,6 +133,7 @@ starting_order = False
 
 # training loop
 
+#look at starting order, maybe wrong logic?
 for i in range(nbr_ep):
     n = 0
     board = [0,0,0,0,0,0,0,0,0]
@@ -176,7 +177,7 @@ for i in range(nbr_ep):
 #Test
 
 #some parameters
-nbr_of_tests = 5
+nbr_of_tests = 10000
 result = [0,0,0]
 test_starting_order = False
 
@@ -185,61 +186,53 @@ def check_termination(r):
     terminate = False
     result = 0
     if r == rewards[0]:  # New model wins
-        print("New model wins")
         terminate = True
         result = 0
     elif r == rewards[1]:  # Old model wins
-        print("Old model wins")
         terminate = True
         result = 1
     elif r == rewards[2]:  # Tie
-        print("Tie")
         terminate = True
         result = 2
     return [terminate,result]
 
 for i in range(nbr_of_tests):
-    print("Test", i+1)
+    # print("Test", i + 1)
     # print_board(board)
-    # print("\n")
     test_starting_order = not test_starting_order
-    board = [0,0,0,0,0,0,0,0,0]
+    board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     n = 0
 
     while True:
-        check = check_termination(reward(board, rewards))
-        if(check[0]):
+        # print_board(board)
+        # print("\n")
+        # Check if the game should terminate based on the current board
+        current_reward = reward(board, rewards)
+        check = check_termination(current_reward)
+        if check[0]:
             result[check[1]] += 1
             break
-        
-        if(test_starting_order):
-            action = get_greedy_action(Q, board, epsilon)
-            board[action] = 1
-        else:
-            board[random_model(board)] = 2
 
-        print_board(board)
-        # Check for termination and rewards
-        check = check_termination(reward(board, rewards))
-        if(check[0]):
-            result[check[1]] += 1
-            break
-        
-        if(test_starting_order):
-            board[random_model(board)] = 2
+        # Perform actions based on the starting order and turn
+        if test_starting_order:
+            if n % 2 == 0:
+                action = get_greedy_action(Q, board, 0)
+                board[action] = 1
+            else:
+                if get_valid_actions(board):
+                    board[random_model(board)] = 2
         else:
-            action = get_greedy_action(Q, board, epsilon)
-            board[action] = 1
+            if n % 2 == 0:
+                if get_valid_actions(board):
+                    board[random_model(board)] = 2
+            else:
+                action = get_greedy_action(Q, board, epsilon)
+                board[action] = 1
 
-        print_board(board)
+        # Increment turn counter
         n += 1
 
 print("Number of Tests:", nbr_of_tests)
 print("New Model Wins:", result[0])
 print("Old Model Wins:", result[1])
 print("Ties:", result[2])
-
-        # # Ensure selected action is valid
-        # if action not in get_valid_actions(board):
-        #     print("Invalid action selected:", action)
-        #     break
