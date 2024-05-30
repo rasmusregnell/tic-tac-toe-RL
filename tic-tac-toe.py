@@ -176,8 +176,9 @@ for i in range(nbr_ep):
 #Test
 
 #some parameters
-nbr_of_tests = 100
+nbr_of_tests = 10000
 result = [0,0,0]
+test_starting_order = False
 
 #based on recieved reward, returns terminate(true or false) and result
 def check_termination(r):
@@ -201,24 +202,22 @@ for i in range(nbr_of_tests):
     print("Test", i+1)
     print_board(board)
     print("\n")
-    
+    test_starting_order = not test_starting_order
     board = [0,0,0,0,0,0,0,0,0]
-    
+    n = 0
+
     while True:
         check = check_termination(reward(board, rewards))
         if(check[0]):
             result[check[1]] += 1
             break
 
-        # Select action based on Q-values and epsilon-greedy policy
-        action = get_greedy_action(Q, board, epsilon)
-        
-        # Ensure selected action is valid
-        if action not in get_valid_actions(board):
-            print("Invalid action selected:", action)
-            break
-        
-        board[action] = 1  # Perform the action
+        if(n == 0 and test_starting_order):
+            action = get_greedy_action(Q, board, epsilon)
+            board[action] = 1
+        else:
+            board[random_model(board)] = 2
+
         
         # Check for termination and rewards
         check = check_termination(reward(board, rewards))
@@ -226,9 +225,20 @@ for i in range(nbr_of_tests):
             result[check[1]] += 1
             break
         
-        board[random_model(board)] = 2
+        if(n == 0 and test_starting_order):
+            board[random_model(board)] = 2
+        else:
+            action = get_greedy_action(Q, board, epsilon)
+            board[action] = 1
+
+        n += 1
 
 print("Number of Tests:", nbr_of_tests)
 print("New Model Wins:", result[0])
 print("Old Model Wins:", result[1])
 print("Ties:", result[2])
+
+        # # Ensure selected action is valid
+        # if action not in get_valid_actions(board):
+        #     print("Invalid action selected:", action)
+        #     break
