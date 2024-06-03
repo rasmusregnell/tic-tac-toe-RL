@@ -234,8 +234,11 @@ if __name__ == "__main__":
             # Increment turn counter
             n += 1
 
+    #saves Q matrix as pkl file
     with open('Q.pkl', 'wb') as file:
         pickle.dump(Q, file)
+    
+    #prints tests result
     print("Number of Tests:", nbr_of_tests)
     print("New Model Wins:", result[0])
     print("Old Model Wins:", result[1])

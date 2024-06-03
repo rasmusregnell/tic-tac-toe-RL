@@ -46,8 +46,6 @@ def send_board():
     with open('Q.pkl', 'rb') as file:
         Q = pickle.load(file)
 
-    # Now 'loaded_matrix' contains the matrix data
-
     action = get_greedy_action(Q, board, 0)
     board[action] = 1
     return json.dumps(board)
