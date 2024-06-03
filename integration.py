@@ -17,7 +17,7 @@ from bottle import get, post, run, request, response, hook, route
 from urllib.parse import quote, unquote
 
 from game import get_greedy_action, state_to_int
-
+import pickle
 import json
 
 # Middleware to add CORS headers to the response
@@ -28,13 +28,7 @@ def enable_cors():
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Origin, Content-Type, Accept, Authorization'
 
-
-@get('/ping')
-def ping():
-
-    response.status = 200
-    return {"pong": "pong"}
-
+#needed to bypass cors for specific options req to endpoint
 @route('/sendBoard', method='OPTIONS')
 def send_board_options():
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -42,11 +36,21 @@ def send_board_options():
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
     return {}
 
+#end point for receiving board and sending new board with computer move
 @post('/sendBoard')
 def send_board():
     response.status = 200
-    print(request.json)
-    return {"sucess" : "yes"}
+    board = request.json
+
+    # Load matrix from the saved file
+    with open('Q.pkl', 'rb') as file:
+        Q = pickle.load(file)
+
+    # Now 'loaded_matrix' contains the matrix data
+
+    action = get_greedy_action(Q, board, 0)
+    board[action] = 1
+    return json.dumps(board)
 
 run(host='localhost', port=5175, debug=True)
 
