@@ -123,7 +123,7 @@ alpha = 0.5
 #explore random
 epsilon = 0.3
 #penalty
-gamma = 0.5
+gamma = 0.9
 
 
 #Switch starting order after each episode
@@ -242,4 +242,5 @@ if __name__ == "__main__":
     print("Number of Tests:", nbr_of_tests)
     print("New Model Wins:", result[0])
     print("Old Model Wins:", result[1])
+    print("Winning percentage:", result[0] / nbr_of_tests * 100, "%")
     print("Ties:", result[2])
