@@ -8,6 +8,9 @@ import pickle
 #1 = model brick
 #2 = old model brick
 
+#problem? old_model is trained on playing against 2s
+#should I test against random model, or latest model? Maybe test against model nbr 2
+
 def print_board(board):
     symbols = {0: ' ', 1: 'X', 2: 'O'}
     for i in range(3):
@@ -15,6 +18,14 @@ def print_board(board):
         if i < 2:
             print('-' * 5)
 
+
+# returns index of next move
+def old_model(board: List[int], model_iteration: int, Q ):
+    if(model_iteration == 0):
+        return random_model(board)
+    else:
+        #should epsilon be zero here?
+        return get_greedy_action(Q, board, 0)
 
 # returns index of next move
 def random_model(board: List[int] ):
@@ -70,6 +81,17 @@ def reward(board: List[int], rewards: List[int]):
 def state_to_int(board):
     return int(''.join(map(str, board)), 3)
 
+# returns normalized board, i.e 1 is player, -1 is opponent
+# used so that state representation is the same regardless of perspective
+def get_normalized_board(board, player):
+    normalized_board = [0,0,0,0,0,0,0,0,0]
+    for i in range(len(board)):
+        if(board[i] == player):
+            normalized_board[i] = 1
+        elif(not board[i] == 0):
+            normalized_board[i] = -1
+    return normalized_board
+
 #get valid actions
 def get_valid_actions(board):
     return [i for i,cell in enumerate(board) if cell == 0]
@@ -112,10 +134,13 @@ def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,termin
 #training
 
 #hyperparams
+#number of models trained:
+nbr_models = 1
 #number of episodes
-nbr_ep = 20000
-#initilize empty Q
+nbr_ep = 2
+#initilize empty Qs
 Q = np.zeros((3**9, 9))
+Q_old = np.zeros((3**9, 9))
 #initilize rewards
 rewards = [10,-10,5,0]
 #learning rate
@@ -124,6 +149,8 @@ alpha = 0.5
 epsilon = 0.3
 #penalty
 gamma = 0.9
+#winning percentage of different models:
+winning_percentage = [0 for i in range(nbr_models)]
 
 
 #Switch starting order after each episode
@@ -136,111 +163,123 @@ starting_order = False
 
 #only run if executed directly, trains and tests agent
 if __name__ == "__main__":
-    for i in range(nbr_ep):
-        n = 0
-        board = [0,0,0,0,0,0,0,0,0]
-        while True:
-            #change starting order between episodes
-            if(n == 0 and starting_order):
-                board[random_model(board)] = 2
+    for m in range(nbr_models):
+        # set new_model to old_model, reset Q
+        Q_old = Q.copy()
+        Q = np.zeros((3**9, 9))
 
-            #current state
-            state = state_to_int(board)
+        for i in range(nbr_ep):
+            n = 0
+            board = [0,0,0,0,0,0,0,0,0]
+            while True:
+                print(get_normalized_board(board,1))
+                print(get_normalized_board(board,2))
+                #change starting order between episodes
+                if(n == 0 and starting_order):
+                    board[old_model(board,m,Q_old)] = 2
 
-            #immediate reward
-            immediate_reward = reward(board, rewards)
+                #current state
+                state = state_to_int(board)
 
-            #action selected, use get_greedy_action
-            action = get_greedy_action(Q,board,epsilon)
-            #action = np.argmax(Q[state])
+                #immediate reward
+                immediate_reward = reward(board, rewards)
 
-            #if not terminate state
-            if (immediate_reward == rewards[3]):
-                #Next state is determined
-                #next state is when both parts has played
-                #current state -> m1 move with certain action -> m2 move -> next state
-                board[action] = 1
-                
-                #have to check if board is full or already won before old model moves
-                if(len(get_valid_actions(board)) >= 1 and not has_won(board, 1)):
-                    board[random_model(board)] = 2
-                
-                #next state is derived
-                next_state = state_to_int(board)
-                q_learning_updates(Q,state, action, immediate_reward, next_state, alpha, gamma, False,board)
-                n += 1
-            else:
-                #episode complete
-                q_learning_updates(Q,state, action, immediate_reward, None, alpha, gamma, True, board)
-                starting_order = not starting_order
-                break
+                #action selected, use get_greedy_action
+                action = get_greedy_action(Q,board,epsilon)
+                #action = np.argmax(Q[state])
+
+                #if not terminate state
+                if (immediate_reward == rewards[3]):
+                    #Next state is determined
+                    #next state is when both parts has played
+                    #current state -> m1 move with certain action -> m2 move -> next state
+                    board[action] = 1
+                    
+                    #have to check if board is full or already won before old model moves
+                    if(len(get_valid_actions(board)) >= 1 and not has_won(board, 1)):
+                        board[old_model(board,m,Q_old)] = 2
+                    
+                    #next state is derived
+                    next_state = state_to_int(board)
+                    q_learning_updates(Q,state, action, immediate_reward, next_state, alpha, gamma, False,board)
+                    n += 1
+                else:
+                    #episode complete
+                    q_learning_updates(Q,state, action, immediate_reward, None, alpha, gamma, True, board)
+                    starting_order = not starting_order
+                    break
 
 
-    #Test
+        #Test
 
-    #some parameters
-    nbr_of_tests = 10000
-    result = [0,0,0]
-    test_starting_order = False
+        #some parameters
+        nbr_of_tests = 10000
+        result = [0,0,0]
+        test_starting_order = False
 
-    #based on recieved reward, returns terminate(true or false) and result
-    def check_termination(r):
-        terminate = False
-        result = 0
-        if r == rewards[0]:  # New model wins
-            terminate = True
+        #based on recieved reward, returns terminate(true or false) and result
+        def check_termination(r):
+            terminate = False
             result = 0
-        elif r == rewards[1]:  # Old model wins
-            terminate = True
-            result = 1
-        elif r == rewards[2]:  # Tie
-            terminate = True
-            result = 2
-        return [terminate,result]
+            if r == rewards[0]:  # New model wins
+                terminate = True
+                result = 0
+            elif r == rewards[1]:  # Old model wins
+                terminate = True
+                result = 1
+            elif r == rewards[2]:  # Tie
+                terminate = True
+                result = 2
+            return [terminate,result]
 
-    for i in range(nbr_of_tests):
-        # print("Test", i + 1)
-        # print_board(board)
-        test_starting_order = not test_starting_order
-        board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        n = 0
-
-        while True:
+        for i in range(nbr_of_tests):
+            # print("Test", i + 1)
             # print_board(board)
-            # print("\n")
-            # Check if the game should terminate based on the current board
-            current_reward = reward(board, rewards)
-            check = check_termination(current_reward)
-            if check[0]:
-                result[check[1]] += 1
-                break
+            test_starting_order = not test_starting_order
+            board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+            n = 0
 
-            # Perform actions based on the starting order and turn
-            if test_starting_order:
-                if n % 2 == 0:
-                    action = get_greedy_action(Q, board, 0)
-                    board[action] = 1
+            while True:
+                # print_board(board)
+                # print("\n")
+                # Check if the game should terminate based on the current board
+                current_reward = reward(board, rewards)
+                check = check_termination(current_reward)
+                if check[0]:
+                    result[check[1]] += 1
+                    break
+
+                # Perform actions based on the starting order and turn
+                if test_starting_order:
+                    if n % 2 == 0:
+                        action = get_greedy_action(Q, board, 0)
+                        board[action] = 1
+                    else:
+                        if get_valid_actions(board):
+                            board[old_model(board,0,Q_old)] = 2
                 else:
-                    if get_valid_actions(board):
-                        board[random_model(board)] = 2
-            else:
-                if n % 2 == 0:
-                    if get_valid_actions(board):
-                        board[random_model(board)] = 2
-                else:
-                    action = get_greedy_action(Q, board, epsilon)
-                    board[action] = 1
+                    if n % 2 == 0:
+                        if get_valid_actions(board):
+                            board[old_model(board,0,Q_old)] = 2
+                    else:
+                        action = get_greedy_action(Q, board, epsilon)
+                        board[action] = 1
 
-            # Increment turn counter
-            n += 1
+                # Increment turn counter
+                n += 1
 
-    #saves Q matrix as pkl file
-    with open('Q.pkl', 'wb') as file:
-        pickle.dump(Q, file)
-    
-    #prints tests result
-    print("Number of Tests:", nbr_of_tests)
-    print("New Model Wins:", result[0])
-    print("Old Model Wins:", result[1])
-    print("Winning percentage:", result[0] / nbr_of_tests * 100, "%")
-    print("Ties:", result[2])
+
+        if(m == nbr_models - 1): 
+            #saves latest Q matrix as pkl file 
+            with open('Q.pkl', 'wb') as file:
+                pickle.dump(Q, file)
+        
+        #tests result
+        winning_percentage[m] = result[0] / nbr_of_tests * 100 
+        print("Model Iteration:", m)
+        print("Number of Tests:", nbr_of_tests)
+        print("New Model Wins:", result[0])
+        print("Old Model Wins:", result[1])
+        print("Winning percentage:", winning_percentage[m] , "%")
+        print("Ties:", result[2])
+    print(winning_percentage)
