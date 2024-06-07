@@ -46,7 +46,7 @@ def old_model(board: List[int], model_iteration: int, Q ):
         return random_model(board)
     else:
         #should epsilon be zero here?
-        return get_greedy_action(Q, board, epsilon, 2)
+        return get_greedy_action(Q, board, 0.4, 2)
 
 # returns index of next move
 def random_model(board: List[int] ):
@@ -100,9 +100,7 @@ def reward(board: List[int], rewards: List[int]):
 # in this function we convert the state of the board to a unique integer
 # which can be used to index q matrix
 def state_to_int(board, player = 1):
-    print(board)
     reversed_board = get_board(board, player)
-    print(reversed_board)
     return int(''.join(map(str, reversed_board)), 3)
 
 # returns reversed board if player = 2, else normal board
@@ -159,6 +157,8 @@ def q_learning_updates(Q, state, next_state, next_board, action, reward, alpha, 
 #winning percentage of different models:
 winning_percentage = [0 for i in range(nbr_models)]
 
+#array of earlier trained Qs
+old_Qs = []
 
 #Switch starting order after each episode
 starting_order = False
@@ -168,11 +168,13 @@ starting_order = False
 #only run if executed directly, trains and tests agent
 if __name__ == "__main__":
     for m in range(nbr_models):
-        # set new_model to old_model, reset Q
-        Q_old = Q.copy()
+        old_Qs.append(Q.copy())
+        # reset Q
         Q = np.zeros((3**9, 9))
 
         for i in range(nbr_ep):
+            # select random model from earlier trained models
+            Q_old = random.choice(old_Qs)
             n = 0
             board = [0,0,0,0,0,0,0,0,0]
             while True:
