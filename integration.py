@@ -43,7 +43,7 @@ def send_board():
     board = request.json
 
     # Load matrix from the saved file
-    with open('best_models/Q1.pkl', 'rb') as file:
+    with open('Q.pkl', 'rb') as file:
         Q = pickle.load(file)
 
     action = get_greedy_action(Q, board, 0, 2)

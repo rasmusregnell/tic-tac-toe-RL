@@ -243,6 +243,10 @@ if __name__ == "__main__":
         result = [0,0,0]
         test_starting_order = False
 
+        #Opponent for all tests is "best" model from Q.pkl
+        with open('Q.pkl', 'rb') as file:
+            opponent = pickle.load(file)
+
         #based on recieved reward, returns terminate(true or false) and result
         def check_termination(r):
             terminate = False
@@ -259,14 +263,12 @@ if __name__ == "__main__":
             return [terminate,result]
 
         for i in range(nbr_of_tests):
-            # print("Test", i + 1)
-            # print_board(board)
             test_starting_order = not test_starting_order
             board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
             n = 0
 
             # after each test, change opponent
-            opponent = random.choice(old_Qs)
+            #opponent = random.choice(old_Qs)
 
             while True:
                 # print_board(board)
@@ -285,11 +287,11 @@ if __name__ == "__main__":
                         board[action] = 1
                     else:
                         if get_valid_actions(board):
-                            board[old_model(board,Q_old)] = 2
+                            board[old_model(board,opponent)] = 2
                 else:
                     if n % 2 == 0:
                         if get_valid_actions(board):
-                            board[old_model(board,Q_old)] = 2
+                            board[old_model(board,opponent)] = 2
                     else:
                         action = get_greedy_action(Q, board, epsilon)
                         board[action] = 1
