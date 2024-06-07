@@ -18,7 +18,7 @@ import pickle
 #number of models trained:
 nbr_models = 10
 #number of episodes
-nbr_ep = 40000
+nbr_ep = 50000
 #initilize empty Qs
 Q = np.zeros((3**9, 9))
 Q_old = np.zeros((3**9, 9))
@@ -26,8 +26,10 @@ Q_old = np.zeros((3**9, 9))
 rewards = [10,-10,5,0]
 #learning rate
 alpha = 0.5
-#explore random
-epsilon = 0.3
+#epsilon for model currently trained
+epsilon = 0.4
+#epsilon for old models used as opponent
+opponent_epsilon = 0.2
 #penalty
 gamma = 0.9
 
@@ -41,12 +43,13 @@ def print_board(board):
 
 
 # returns index of next move
-def old_model(board: List[int], model_iteration: int, Q ):
+# model_iteration = 1 is set to default, used for testing
+def old_model(board: List[int], Q, model_iteration: int = 1):
     if(model_iteration == 0):
         return random_model(board)
     else:
-        #should epsilon be zero here?
-        return get_greedy_action(Q, board, 0.4, 2)
+        #decide exploration on opponent
+        return get_greedy_action(Q, board, opponent_epsilon, 2)
 
 # returns index of next move
 def random_model(board: List[int] ):
@@ -183,7 +186,7 @@ if __name__ == "__main__":
 
                 #change starting order between episodes
                 if(n == 0 and starting_order):
-                    board[old_model(board,m,Q_old)] = 2
+                    board[old_model(board,Q_old,m)] = 2
 
                 #current state
                 state = state_to_int(board)
@@ -204,7 +207,7 @@ if __name__ == "__main__":
                     
                     #have to check if board is full or already won before old model moves
                     if(len(get_valid_actions(board)) >= 1 and not has_won(board, 1)):
-                        board[old_model(board,m,Q_old)] = 2
+                        board[old_model(board,Q_old,m)] = 2
                     
                     #next state is derived
                     next_state = state_to_int(board)
@@ -245,6 +248,8 @@ if __name__ == "__main__":
             test_starting_order = not test_starting_order
             board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
             n = 0
+            # after each test, change opponent
+            opponent = random.choice(old_Qs)
 
             while True:
                 # print_board(board)
@@ -263,11 +268,11 @@ if __name__ == "__main__":
                         board[action] = 1
                     else:
                         if get_valid_actions(board):
-                            board[old_model(board,0,Q_old)] = 2
+                            board[old_model(board,Q_old)] = 2
                 else:
                     if n % 2 == 0:
                         if get_valid_actions(board):
-                            board[old_model(board,0,Q_old)] = 2
+                            board[old_model(board,Q_old)] = 2
                     else:
                         action = get_greedy_action(Q, board, epsilon)
                         board[action] = 1
