@@ -11,6 +11,8 @@ import pickle
 #problem? old_model is trained on playing against 2s
 #should I test against random model, or latest model? Maybe test against model nbr 2
 
+#next time: introduce normalized board in the correct place, maybe in state transform function?
+
 def print_board(board):
     symbols = {0: ' ', 1: 'X', 2: 'O'}
     for i in range(3):
@@ -25,7 +27,7 @@ def old_model(board: List[int], model_iteration: int, Q ):
         return random_model(board)
     else:
         #should epsilon be zero here?
-        return get_greedy_action(Q, board, 0)
+        return get_greedy_action(Q, board, 0, 2)
 
 # returns index of next move
 def random_model(board: List[int] ):
@@ -78,19 +80,19 @@ def reward(board: List[int], rewards: List[int]):
 # we use the current state of the board as the state
 # in this function we convert the state of the board to a unique integer
 # which can be used to index q matrix
-def state_to_int(board):
-    return int(''.join(map(str, board)), 3)
+def state_to_int(board, player = 1):
+    normalized_board = get_board(board, player)
+    return int(''.join(map(str, normalized_board)), 3)
 
-# returns normalized board, i.e 1 is player, -1 is opponent
+# returns reversed board if player = 2, else normal board
 # used so that state representation is the same regardless of perspective
-def get_normalized_board(board, player):
-    normalized_board = [0,0,0,0,0,0,0,0,0]
-    for i in range(len(board)):
-        if(board[i] == player):
-            normalized_board[i] = 1
-        elif(not board[i] == 0):
-            normalized_board[i] = -1
-    return normalized_board
+def get_board(board, player):
+    if player == 1:
+        # For player 1, 1 remains 1, 2 remains 2, 0 remains 0
+        return board
+    else:
+        # For player 2, swap 1s and 2s
+        return [2 if x == 1 else 1 if x == 2 else 0 for x in board]
 
 #get valid actions
 def get_valid_actions(board):
@@ -108,8 +110,8 @@ def masked_next_action(Q,state,valid_actions):
     return np.argmax(masked_q_values)
 
 #select greedy action
-def get_greedy_action(Q,board,epsilon):
-    state = state_to_int(board)
+def get_greedy_action(Q,board,epsilon, player = 1):
+    state = state_to_int(board,player)
     valid_actions = get_valid_actions(board)
     if (len(valid_actions) == 1):
         return valid_actions[0]
@@ -118,7 +120,7 @@ def get_greedy_action(Q,board,epsilon):
     else:            
         return masked_next_action(Q,state,valid_actions)
     
-def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,terminate,next_board):
+def q_learning_updates(Q, state, next_state, next_board, action, reward, alpha, gamma,terminate):
     if(not terminate):
         valid_actions_next = get_valid_actions(next_board)
         best_next_action = masked_next_action(Q,next_state,valid_actions_next)
@@ -135,9 +137,9 @@ def q_learning_updates(Q, state, action, reward, next_state, alpha, gamma,termin
 
 #hyperparams
 #number of models trained:
-nbr_models = 1
+nbr_models = 10
 #number of episodes
-nbr_ep = 2
+nbr_ep = 20000
 #initilize empty Qs
 Q = np.zeros((3**9, 9))
 Q_old = np.zeros((3**9, 9))
@@ -172,8 +174,9 @@ if __name__ == "__main__":
             n = 0
             board = [0,0,0,0,0,0,0,0,0]
             while True:
-                print(get_normalized_board(board,1))
-                print(get_normalized_board(board,2))
+                #print(get_board(board,1))
+                #print(get_board(board,2))
+
                 #change starting order between episodes
                 if(n == 0 and starting_order):
                     board[old_model(board,m,Q_old)] = 2
@@ -201,11 +204,11 @@ if __name__ == "__main__":
                     
                     #next state is derived
                     next_state = state_to_int(board)
-                    q_learning_updates(Q,state, action, immediate_reward, next_state, alpha, gamma, False,board)
+                    q_learning_updates(Q,state, next_state, board, action, immediate_reward, alpha, gamma, False)
                     n += 1
                 else:
                     #episode complete
-                    q_learning_updates(Q,state, action, immediate_reward, None, alpha, gamma, True, board)
+                    q_learning_updates(Q,state, None, board, action, immediate_reward, alpha, gamma, True)
                     starting_order = not starting_order
                     break
 
