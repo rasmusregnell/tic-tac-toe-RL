@@ -100,8 +100,10 @@ def reward(board: List[int], rewards: List[int]):
 # in this function we convert the state of the board to a unique integer
 # which can be used to index q matrix
 def state_to_int(board, player = 1):
-    normalized_board = get_board(board, player)
-    return int(''.join(map(str, normalized_board)), 3)
+    print(board)
+    reversed_board = get_board(board, player)
+    print(reversed_board)
+    return int(''.join(map(str, reversed_board)), 3)
 
 # returns reversed board if player = 2, else normal board
 # used so that state representation is the same regardless of perspective

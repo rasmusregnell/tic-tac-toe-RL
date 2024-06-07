@@ -46,8 +46,9 @@ def send_board():
     with open('Q.pkl', 'rb') as file:
         Q = pickle.load(file)
 
-    action = get_greedy_action(Q, board, 0)
-    board[action] = 1
+    action = get_greedy_action(Q, board, 0, 2)
+    board[action] = 2
+    #print(board)
     return json.dumps(board)
 
 run(host='localhost', port=5175, debug=True)
