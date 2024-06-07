@@ -8,19 +8,23 @@ import pickle
 #1 = model brick
 #2 = old model brick
 
-#problem? old_model is trained on playing against 2s
-#should I test against random model, or latest model? Maybe test against model nbr 2
+# Reflection:
+# currently I use same test and training bots, but since these are picked
+# randomly from a large list, it should not be a problem
+# maybe testing should be agenst same agent the entire run, to avoid randomness in testing
 
-#next time: save the model with highest winning percentage amongst nbr_of_models
-# this is now possible because the first model is trained on old qs as well
-# the idea is that due to randomness, it may discover a winning strategy
-# also fix in vue that who starts the game switches
+# Ideas for the future:
+# more metrics?
+
+#next time:
+# Save the Q model that have the highest winning precentage so far 
+# Fix in vue that who starts the game switches
 
 #hyperparams
 #number of models trained:
 nbr_models = 10
 #number of episodes
-nbr_ep = 50000
+nbr_ep = 100000
 #initilize empty Qs
 Q = np.zeros((3**9, 9))
 Q_old = np.zeros((3**9, 9))
@@ -177,6 +181,11 @@ starting_order = False
 
 #only run if executed directly, trains and tests agent
 if __name__ == "__main__":
+
+    # Some information on older models:
+    print("Number of older models to compete against", len(old_Qs))
+    print("Best winning percentage so far: (trained and tested against minimum x models)")
+
     for m in range(nbr_models):
         old_Qs.append(Q.copy())
         # reset Q
@@ -255,6 +264,7 @@ if __name__ == "__main__":
             test_starting_order = not test_starting_order
             board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
             n = 0
+
             # after each test, change opponent
             opponent = random.choice(old_Qs)
 
@@ -287,14 +297,6 @@ if __name__ == "__main__":
                 # Increment turn counter
                 n += 1
 
-
-        if(m == nbr_models - 1): 
-            #saves latest Q matrix as pkl file 
-            with open('Q.pkl', 'wb') as file:
-                pickle.dump(Q, file)
-            # saves older trained models
-            with open('old_Qs.pkl', 'wb') as file:
-                pickle.dump(old_Qs, file)
         
         #tests result
         winning_percentage[m] = result[0] / nbr_of_tests * 100 
@@ -304,4 +306,22 @@ if __name__ == "__main__":
         print("Old Model Wins:", result[1])
         print("Winning percentage:", winning_percentage[m] , "%")
         print("Ties:", result[2])
-    print(winning_percentage)
+
+        # after training and testing is done
+        if(m == nbr_models - 1): 
+            # prints winning percentage
+            print("List of winning percentage: ", winning_percentage)
+
+            index_of_best_Q = np.argmax(winning_percentage)
+            newly_trained_Qs = old_Qs[-nbr_models:]
+
+            # print best winning percentage
+            print(winning_percentage[index_of_best_Q])
+
+            #saves best Q matrix of the newly trained Qs as pkl file 
+            with open('Q.pkl', 'wb') as file:
+                pickle.dump(newly_trained_Qs[index_of_best_Q], file)
+
+            # saves all older trained models to file
+            with open('old_Qs.pkl', 'wb') as file:
+                pickle.dump(old_Qs, file)
