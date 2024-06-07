@@ -11,8 +11,10 @@ import pickle
 #problem? old_model is trained on playing against 2s
 #should I test against random model, or latest model? Maybe test against model nbr 2
 
-#next time: introduce normalized board in the correct place, maybe in state transform function?
-
+#next time: save the model with highest winning percentage amongst nbr_of_models
+# this is now possible because the first model is trained on old qs as well
+# the idea is that due to randomness, it may discover a winning strategy
+# also fix in vue that who starts the game switches
 
 #hyperparams
 #number of models trained:
@@ -43,9 +45,9 @@ def print_board(board):
 
 
 # returns index of next move
-# model_iteration = 1 is set to default, used for testing
-def old_model(board: List[int], Q, model_iteration: int = 1):
-    if(model_iteration == 0):
+# policy based if random = false
+def old_model(board: List[int], Q, random = False):
+    if(random):
         return random_model(board)
     else:
         #decide exploration on opponent
@@ -161,7 +163,12 @@ def q_learning_updates(Q, state, next_state, next_board, action, reward, alpha, 
 winning_percentage = [0 for i in range(nbr_models)]
 
 #array of earlier trained Qs
-old_Qs = []
+try:
+  with open('old_Qs.pkl', 'rb') as file:
+    old_Qs = pickle.load(file)
+except:
+  old_Qs = []
+
 
 #Switch starting order after each episode
 starting_order = False
@@ -186,7 +193,7 @@ if __name__ == "__main__":
 
                 #change starting order between episodes
                 if(n == 0 and starting_order):
-                    board[old_model(board,Q_old,m)] = 2
+                    board[old_model(board,Q_old)] = 2
 
                 #current state
                 state = state_to_int(board)
@@ -207,7 +214,7 @@ if __name__ == "__main__":
                     
                     #have to check if board is full or already won before old model moves
                     if(len(get_valid_actions(board)) >= 1 and not has_won(board, 1)):
-                        board[old_model(board,Q_old,m)] = 2
+                        board[old_model(board,Q_old)] = 2
                     
                     #next state is derived
                     next_state = state_to_int(board)
@@ -285,6 +292,9 @@ if __name__ == "__main__":
             #saves latest Q matrix as pkl file 
             with open('Q.pkl', 'wb') as file:
                 pickle.dump(Q, file)
+            # saves older trained models
+            with open('old_Qs.pkl', 'wb') as file:
+                pickle.dump(old_Qs, file)
         
         #tests result
         winning_percentage[m] = result[0] / nbr_of_tests * 100 
