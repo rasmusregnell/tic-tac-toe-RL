@@ -13,6 +13,25 @@ import pickle
 
 #next time: introduce normalized board in the correct place, maybe in state transform function?
 
+
+#hyperparams
+#number of models trained:
+nbr_models = 10
+#number of episodes
+nbr_ep = 40000
+#initilize empty Qs
+Q = np.zeros((3**9, 9))
+Q_old = np.zeros((3**9, 9))
+#initilize rewards
+rewards = [10,-10,5,0]
+#learning rate
+alpha = 0.5
+#explore random
+epsilon = 0.3
+#penalty
+gamma = 0.9
+
+
 def print_board(board):
     symbols = {0: ' ', 1: 'X', 2: 'O'}
     for i in range(3):
@@ -27,7 +46,7 @@ def old_model(board: List[int], model_iteration: int, Q ):
         return random_model(board)
     else:
         #should epsilon be zero here?
-        return get_greedy_action(Q, board, 0, 2)
+        return get_greedy_action(Q, board, epsilon, 2)
 
 # returns index of next move
 def random_model(board: List[int] ):
@@ -135,31 +154,12 @@ def q_learning_updates(Q, state, next_state, next_board, action, reward, alpha, 
 
 #training
 
-#hyperparams
-#number of models trained:
-nbr_models = 10
-#number of episodes
-nbr_ep = 20000
-#initilize empty Qs
-Q = np.zeros((3**9, 9))
-Q_old = np.zeros((3**9, 9))
-#initilize rewards
-rewards = [10,-10,5,0]
-#learning rate
-alpha = 0.5
-#explore random
-epsilon = 0.3
-#penalty
-gamma = 0.9
 #winning percentage of different models:
 winning_percentage = [0 for i in range(nbr_models)]
 
 
 #Switch starting order after each episode
 starting_order = False
-
-#Keep track of beginning of episode
-
 
 # training loop
 
