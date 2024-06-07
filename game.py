@@ -11,7 +11,11 @@ import pickle
 # Reflection:
 # currently I use same test and training bots, but since these are picked
 # randomly from a large list, it should not be a problem
+
 # maybe testing should be agenst same agent the entire run, to avoid randomness in testing
+# the agent is the best so far(Q.pks), and Q.pks is updated if one of the trained models gets above 50%
+
+# maybe the old_Qs should be picked with more care
 
 # Ideas for the future:
 # more metrics?
@@ -22,7 +26,7 @@ import pickle
 
 #hyperparams
 #number of models trained:
-nbr_models = 10
+nbr_models = 5
 #number of episodes
 nbr_ep = 100000
 #initilize empty Qs
