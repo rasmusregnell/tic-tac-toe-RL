@@ -1,6 +1,6 @@
 # A repository for:
 
-- training agents to play tic-tac-toe with Q learning with epsilon-greedy strategy
+- training agents to play tic-tac-toe with Q learning using an epsilon-greedy strategy
 - REST API to integrate with front-end
 
 ## Starting the bottle server:
@@ -19,16 +19,6 @@ a random opponent, and then continuosly training more models and adding them to 
 ## Testing:
 
 The testing of each trained model was done by playing 10 000 games against randomly selected opponents from old_Qs. Winning percentage was used as metric when choosing which model to add to best_Qs.
-
-## Hyper parameters:
-
-nbr_models = 10
-nbr_ep = 100000
-rewards = [10,-10,5,0]
-alpha = 0.3
-epsilon = 0.4
-opponent_epsilon = 0.2
-gamma = 0.9
 
 ## Files explained:
 
