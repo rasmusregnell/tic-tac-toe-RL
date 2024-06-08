@@ -10,8 +10,6 @@ import pickle
 # experiment with parameters, create test for this
 # add decay of epsilon, either exp or linear, epsilon = initial_epsilon * (decay_rate ** episode)
 
-
-
 #initilize empty Qs
 Q = np.zeros((3**9, 9))
 Q_old = np.zeros((3**9, 9))
