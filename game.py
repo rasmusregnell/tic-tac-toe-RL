@@ -8,11 +8,13 @@ import pickle
 #1 = model brick
 #2 = old model brick
 
+# very important which Q values are here, decides what the new models can learn
+
 # What I want to implement:
-# add best Qs to an array, one Q for each training sess (nbr_models)
 # add metrics: average reward, variance in performance across different models
 # add tests: one against 50 opponents, one against best Qs(from array), one against best Q
 # experiment with parameters, create test for this
+# add decay of epsilon, either exp or linear, epsilon = initial_epsilon * (decay_rate ** episode)
 
 # Ideas for the future:
 # more metrics?
@@ -23,7 +25,7 @@ import pickle
 
 #hyperparams
 #number of models trained:
-nbr_models = 1
+nbr_models = 10
 #number of episodes
 nbr_ep = 100000
 #initilize empty Qs
@@ -32,7 +34,7 @@ Q_old = np.zeros((3**9, 9))
 #initilize rewards
 rewards = [10,-10,5,0]
 #learning rate
-alpha = 0.5
+alpha = 0.3
 #epsilon for model currently trained
 epsilon = 0.4
 #epsilon for old models used as opponent
@@ -192,7 +194,6 @@ if __name__ == "__main__":
 
     # Some information on older models:
     print("Number of older models to compete against", len(old_Qs))
-    print("Best winning percentage so far: (trained and tested against minimum x models)")
 
     for m in range(nbr_models):
         # add trained model to pool
@@ -251,8 +252,8 @@ if __name__ == "__main__":
         nbr_of_tests = 10000
         result = [0,0,0]
         test_starting_order = False
-
-        #Opponent for all tests is "best" model from Q.pkl
+        
+        #Uncomment for same opponent for all tests
         # with open('Q.pkl', 'rb') as file:
         #     opponent = pickle.load(file)
 
@@ -280,8 +281,6 @@ if __name__ == "__main__":
             opponent = random.choice(old_Qs)
 
             while True:
-                # print_board(board)
-                # print("\n")
                 # Check if the game should terminate based on the current board
                 current_reward = reward(board, rewards)
                 check = check_termination(current_reward)
@@ -326,14 +325,12 @@ if __name__ == "__main__":
             index_of_best_Q = np.argmax(winning_percentage)
             newly_trained_Qs = old_Qs[-nbr_models:]
 
-            # print best winning percentage
-            print(winning_percentage[index_of_best_Q])
-
             #saves best Q matrix of the newly trained Qs as pkl file 
             best_Qs.append([newly_trained_Qs[index_of_best_Q], winning_percentage[index_of_best_Q]])
+
             with open('best_Qs.pkl', 'wb') as file:
                 pickle.dump(best_Qs, file)
-            print("test",best_Qs[0][1])
-            # saves all older trained models to file
-            with open('old_Qs.pkl', 'wb') as file:
-                pickle.dump(old_Qs, file)
+
+            # saves all older trained models to file, uncomment when building pool
+            # with open('old_Qs.pkl', 'wb') as file:
+            #     pickle.dump(old_Qs, file)

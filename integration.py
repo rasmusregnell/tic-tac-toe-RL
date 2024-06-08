@@ -1,18 +1,6 @@
-#idea
-# I have the trained Q matrix, and the get_greedy_action(Q, board, 0)
-#Game loop:
-#vue gives board in [0,0,0,0,0,0,0,0,0] form
-#python returns action index and sends to vue, get_greedy_action(Q,board,0)
-#vue changes action index to fit 2d array
-#computer makes move: computer.value[index[y]][x]]
-
-# other solution:
-# send the whole matrix, compute on client. Pros: only one request. Cons: have to make logic in vue
-
-#left on training model:
-#train multiple models, change old model when better test result
-
 from bottle import get, post, run, request, response, hook, route
+
+import random
 
 from urllib.parse import quote, unquote
 
@@ -23,6 +11,23 @@ import json
 # Load matrix from the saved file
 with open('Q.pkl', 'rb') as file:
     Q = pickle.load(file)
+
+with open('best_Qs.pkl', 'rb') as file:
+    best_Qs = pickle.load(file)
+
+with open('old_Qs.pkl', 'rb') as file:
+    old_Qs = pickle.load(file)
+
+print("test", len(old_Qs))
+
+# old_Qs_2 = old_Qs[:50]
+
+# with open('old_Qs.pkl', 'wb') as file:
+#     pickle.dump(old_Qs_2, file)
+
+
+
+current_Q = Q
 
 # Middleware to add CORS headers to the response
 @hook('after_request')
@@ -46,10 +51,18 @@ def send_board():
     response.status = 200
     board = request.json
 
-    action = get_greedy_action(Q, board, 0, 2)
+    action = get_greedy_action(current_Q, board, 0, 2)
     board[action] = 2
     #print(board)
     return json.dumps(board)
+
+@get('/gameOver')
+def game_over():
+    global current_Q
+    response.status = 200
+    best_Q = random.choice(best_Qs)
+    current_Q = best_Q[0]
+    print(best_Q[1])
 
 run(host='localhost', port=5175, debug=True)
 
