@@ -37,7 +37,6 @@ def send_board_options():
 def send_board():
     response.status = 200
     board = request.json
-
     action = get_greedy_action(current_Q, board, 0, 2)
     board[action] = 2
     return json.dumps(board)
@@ -49,7 +48,6 @@ def game_over():
     response.status = 200
     best_Q = random.choice(best_Qs)
     current_Q = best_Q[0]
-    print(best_Q[1])
 
 run(host='localhost', port=5175, debug=True)
 
