@@ -5,7 +5,7 @@ from game import get_greedy_action, state_to_int
 import pickle
 import json
 
-# Load Q from the file
+# Load Q from Q.pkl
 with open('Q.pkl', 'rb') as file:
     Q = pickle.load(file)
 
