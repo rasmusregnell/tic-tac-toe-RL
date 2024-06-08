@@ -4,26 +4,14 @@ from typing import List
 import random
 import pickle
 
-#0 = no brick
-#1 = model brick
-#2 = old model brick
-
-# very important which Q values are here, decides what the new models can learn
-
 # What I want to implement:
 # add metrics: average reward, variance in performance across different models
 # add tests: one against 50 opponents, one against best Qs(from array), one against best Q
 # experiment with parameters, create test for this
 # add decay of epsilon, either exp or linear, epsilon = initial_epsilon * (decay_rate ** episode)
 
-# Ideas for the future:
-# more metrics?
+#hyperparams for training
 
-#next time:
-# Save the Q model that have the highest winning precentage so far 
-# Fix in vue that who starts the game switches
-
-#hyperparams
 #number of models trained:
 nbr_models = 10
 #number of episodes
@@ -60,7 +48,7 @@ def old_model(board: List[int], Q, random = False):
         #decide exploration on opponent
         return get_greedy_action(Q, board, opponent_epsilon, 2)
 
-# returns index of next move
+# returns index of next move for random model
 def random_model(board: List[int] ):
     found = False
     while(not found):
@@ -162,14 +150,13 @@ def q_learning_updates(Q, state, next_state, next_board, action, reward, alpha, 
     td_error = td_target - Q[state][action]
     Q[state][action] += alpha * td_error
 
- #testing help methods
 
 #training
 
 #winning percentage of different models:
 winning_percentage = [0 for i in range(nbr_models)]
 
-#array of earlier trained Qs
+#array of earlier trained Qs, used as training pool
 try:
   with open('old_Qs.pkl', 'rb') as file:
     old_Qs = pickle.load(file)
@@ -192,7 +179,6 @@ starting_order = False
 #only run if executed directly, trains and tests agent
 if __name__ == "__main__":
 
-    # Some information on older models:
     print("Number of older models to compete against", len(old_Qs))
 
     for m in range(nbr_models):
@@ -207,9 +193,6 @@ if __name__ == "__main__":
             n = 0
             board = [0,0,0,0,0,0,0,0,0]
             while True:
-                #print(get_board(board,1))
-                #print(get_board(board,2))
-
                 #change starting order between episodes
                 if(n == 0 and starting_order):
                     board[old_model(board,Q_old)] = 2
@@ -226,9 +209,6 @@ if __name__ == "__main__":
 
                 #if not terminate state
                 if (immediate_reward == rewards[3]):
-                    #Next state is determined
-                    #next state is when both parts has played
-                    #current state -> m1 move with certain action -> m2 move -> next state
                     board[action] = 1
                     
                     #have to check if board is full or already won before old model moves
@@ -252,10 +232,8 @@ if __name__ == "__main__":
         nbr_of_tests = 10000
         result = [0,0,0]
         test_starting_order = False
-        
-        #Uncomment for same opponent for all tests
-        # with open('Q.pkl', 'rb') as file:
-        #     opponent = pickle.load(file)
+        #pool of models that we test against, usually old_Qs
+        test_models = [i[0] for i in best_Qs]
 
         #based on recieved reward, returns terminate(true or false) and result
         def check_termination(r):
@@ -278,7 +256,7 @@ if __name__ == "__main__":
             n = 0
 
             # after each test, change opponent, selected randomly in pool
-            opponent = random.choice(old_Qs)
+            opponent = random.choice(test_models)
 
             while True:
                 # Check if the game should terminate based on the current board
@@ -309,6 +287,7 @@ if __name__ == "__main__":
 
         
         #tests result
+        print("Training completed, now testing model \n")
         winning_percentage[m] = result[0] / nbr_of_tests * 100 
         print("Model Iteration:", m)
         print("Number of Tests:", nbr_of_tests)
@@ -320,8 +299,10 @@ if __name__ == "__main__":
         # after training and testing is done
         if(m == nbr_models - 1): 
             # prints winning percentage
+            print("All models are trained \n")
             print("List of winning percentage: ", winning_percentage)
 
+            #take out the nbr_models you have trained from old_Qs
             index_of_best_Q = np.argmax(winning_percentage)
             newly_trained_Qs = old_Qs[-nbr_models:]
 
