@@ -1,32 +1,19 @@
 from bottle import get, post, run, request, response, hook, route
-
 import random
-
 from urllib.parse import quote, unquote
-
 from game import get_greedy_action, state_to_int
 import pickle
 import json
 
-# Load matrix from the saved file
+# Load Q from the file
 with open('Q.pkl', 'rb') as file:
     Q = pickle.load(file)
 
+# Load best_Qs
 with open('best_Qs.pkl', 'rb') as file:
     best_Qs = pickle.load(file)
 
-with open('old_Qs.pkl', 'rb') as file:
-    old_Qs = pickle.load(file)
-
-print("test", len(old_Qs))
-
-# old_Qs_2 = old_Qs[:50]
-
-# with open('old_Qs.pkl', 'wb') as file:
-#     pickle.dump(old_Qs_2, file)
-
-
-
+#Current opponent
 current_Q = Q
 
 # Middleware to add CORS headers to the response
@@ -53,9 +40,9 @@ def send_board():
 
     action = get_greedy_action(current_Q, board, 0, 2)
     board[action] = 2
-    #print(board)
     return json.dumps(board)
 
+#end point for changing opponent when game is over
 @get('/gameOver')
 def game_over():
     global current_Q

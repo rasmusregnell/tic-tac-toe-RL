@@ -10,15 +10,18 @@ import pickle
 # experiment with parameters, create test for this
 # add decay of epsilon, either exp or linear, epsilon = initial_epsilon * (decay_rate ** episode)
 
+
+
+#initilize empty Qs
+Q = np.zeros((3**9, 9))
+Q_old = np.zeros((3**9, 9))
+
 #hyperparams for training
 
 #number of models trained:
 nbr_models = 10
 #number of episodes
 nbr_ep = 100000
-#initilize empty Qs
-Q = np.zeros((3**9, 9))
-Q_old = np.zeros((3**9, 9))
 #initilize rewards
 rewards = [10,-10,5,0]
 #learning rate
@@ -235,7 +238,8 @@ if __name__ == "__main__":
         result = [0,0,0]
         test_starting_order = False
         #pool of models that we test against, usually old_Qs
-        test_models = [i[0] for i in best_Qs]
+        # test_models = [i[0] for i in best_Qs]
+        test_models = old_Qs
 
         #based on recieved reward, returns terminate(true or false) and result
         def check_termination(r):
