@@ -179,7 +179,9 @@ starting_order = False
 #only run if executed directly, trains and tests agent
 if __name__ == "__main__":
 
-    print("Number of older models to compete against", len(old_Qs))
+    print("Number of older models to compete against:", len(old_Qs))
+    print("Training has begun")
+
 
     for m in range(nbr_models):
         # add trained model to pool
@@ -250,6 +252,7 @@ if __name__ == "__main__":
                 result = 2
             return [terminate,result]
 
+        print("Training completed, now testing model \n")
         for i in range(nbr_of_tests):
             test_starting_order = not test_starting_order
             board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -287,7 +290,6 @@ if __name__ == "__main__":
 
         
         #tests result
-        print("Training completed, now testing model \n")
         winning_percentage[m] = result[0] / nbr_of_tests * 100 
         print("Model Iteration:", m)
         print("Number of Tests:", nbr_of_tests)
