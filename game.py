@@ -8,14 +8,11 @@ import pickle
 #1 = model brick
 #2 = old model brick
 
-# Reflection:
-# currently I use same test and training bots, but since these are picked
-# randomly from a large list, it should not be a problem
-
-# maybe testing should be agenst same agent the entire run, to avoid randomness in testing
-# the agent is the best so far(Q.pks), and Q.pks is updated if one of the trained models gets above 50%
-
-# maybe the old_Qs should be picked with more care
+# What I want to implement:
+# add best Qs to an array, one Q for each training sess (nbr_models)
+# add metrics: average reward, variance in performance across different models
+# add tests: one against 50 opponents, one against best Qs(from array), one against best Q
+# experiment with parameters, create test for this
 
 # Ideas for the future:
 # more metrics?
@@ -26,7 +23,7 @@ import pickle
 
 #hyperparams
 #number of models trained:
-nbr_models = 5
+nbr_models = 1
 #number of episodes
 nbr_ep = 100000
 #initilize empty Qs
@@ -177,6 +174,13 @@ try:
 except:
   old_Qs = []
 
+#array of best trained Qs
+try:
+  with open('best_Qs.pkl', 'rb') as file:
+    best_Qs = pickle.load(file)
+except:
+  best_Qs = []
+
 
 #Switch starting order after each episode
 starting_order = False
@@ -191,6 +195,7 @@ if __name__ == "__main__":
     print("Best winning percentage so far: (trained and tested against minimum x models)")
 
     for m in range(nbr_models):
+        # add trained model to pool
         old_Qs.append(Q.copy())
         # reset Q
         Q = np.zeros((3**9, 9))
@@ -248,8 +253,8 @@ if __name__ == "__main__":
         test_starting_order = False
 
         #Opponent for all tests is "best" model from Q.pkl
-        with open('Q.pkl', 'rb') as file:
-            opponent = pickle.load(file)
+        # with open('Q.pkl', 'rb') as file:
+        #     opponent = pickle.load(file)
 
         #based on recieved reward, returns terminate(true or false) and result
         def check_termination(r):
@@ -271,8 +276,8 @@ if __name__ == "__main__":
             board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
             n = 0
 
-            # after each test, change opponent
-            #opponent = random.choice(old_Qs)
+            # after each test, change opponent, selected randomly in pool
+            opponent = random.choice(old_Qs)
 
             while True:
                 # print_board(board)
@@ -325,9 +330,10 @@ if __name__ == "__main__":
             print(winning_percentage[index_of_best_Q])
 
             #saves best Q matrix of the newly trained Qs as pkl file 
-            with open('Q.pkl', 'wb') as file:
-                pickle.dump(newly_trained_Qs[index_of_best_Q], file)
-
+            best_Qs.append([newly_trained_Qs[index_of_best_Q], winning_percentage[index_of_best_Q]])
+            with open('best_Qs.pkl', 'wb') as file:
+                pickle.dump(best_Qs, file)
+            print("test",best_Qs[0][1])
             # saves all older trained models to file
             with open('old_Qs.pkl', 'wb') as file:
                 pickle.dump(old_Qs, file)

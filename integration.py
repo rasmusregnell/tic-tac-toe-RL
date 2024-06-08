@@ -20,6 +20,10 @@ from game import get_greedy_action, state_to_int
 import pickle
 import json
 
+# Load matrix from the saved file
+with open('Q.pkl', 'rb') as file:
+    Q = pickle.load(file)
+
 # Middleware to add CORS headers to the response
 @hook('after_request')
 def enable_cors():
@@ -41,10 +45,6 @@ def send_board_options():
 def send_board():
     response.status = 200
     board = request.json
-
-    # Load matrix from the saved file
-    with open('Q.pkl', 'rb') as file:
-        Q = pickle.load(file)
 
     action = get_greedy_action(Q, board, 0, 2)
     board[action] = 2
